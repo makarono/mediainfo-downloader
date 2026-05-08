@@ -1,0 +1,147 @@
+x-test-al2023: &al2023
+  image: amazonlinux:2023
+  volumes:
+    - ./mediainfo-downloader.sh:/mediainfo-downloader.sh:ro
+  working_dir: /tmp
+  restart: "no"
+  entrypoint: bash
+  profiles: ["test"]
+
+x-test-al2: &al2
+  image: amazonlinux:2
+  volumes:
+    - ./mediainfo-downloader.sh:/mediainfo-downloader.sh:ro
+  working_dir: /tmp
+  restart: "no"
+  entrypoint: bash
+  profiles: ["test"]
+
+services:
+
+  # AL2023 arm64 - latest - CLI only
+  al2023-arm64-latest-cli:
+    <<: *al2023
+    platform: linux/arm64
+    command:
+      - -c
+      - |
+        dnf install -y unzip 2>&1 | tail -1
+        bash /mediainfo-downloader.sh --architecture arm64 --dir /tmp/out
+        echo "--- binary ---"
+        ls -lh /tmp/out/
+        /tmp/out/mediainfo --version
+
+  # AL2023 arm64 - latest - CLI + lib
+  al2023-arm64-latest-cli-lib:
+    <<: *al2023
+    platform: linux/arm64
+    command:
+      - -c
+      - |
+        dnf install -y unzip 2>&1 | tail -1
+        bash /mediainfo-downloader.sh --architecture arm64 --dir /tmp/bin --lib-dir /tmp/lib
+        echo "--- binary ---"
+        ls -lh /tmp/bin/
+        echo "--- lib ---"
+        ls -lh /tmp/lib/
+        /tmp/bin/mediainfo --version
+
+  # AL2023 arm64 - specific version - CLI + lib
+  al2023-arm64-v25-10-cli-lib:
+    <<: *al2023
+    platform: linux/arm64
+    command:
+      - -c
+      - |
+        dnf install -y unzip 2>&1 | tail -1
+        bash /mediainfo-downloader.sh --version 25.10 --architecture arm64 --dir /tmp/bin --lib-dir /tmp/lib
+        echo "--- binary ---"
+        ls -lh /tmp/bin/
+        echo "--- lib ---"
+        ls -lh /tmp/lib/
+        /tmp/bin/mediainfo --version
+
+  # AL2023 amd64 - latest - CLI + lib
+  al2023-amd64-latest-cli-lib:
+    <<: *al2023
+    platform: linux/amd64
+    command:
+      - -c
+      - |
+        dnf install -y unzip 2>&1 | tail -1
+        bash /mediainfo-downloader.sh --architecture amd64 --dir /tmp/bin --lib-dir /tmp/lib
+        echo "--- binary ---"
+        ls -lh /tmp/bin/
+        echo "--- lib ---"
+        ls -lh /tmp/lib/
+        /tmp/bin/mediainfo --version
+
+  # AL2023 x86_64 alias - specific version - CLI only
+  al2023-x86-64-v25-10-cli:
+    <<: *al2023
+    platform: linux/amd64
+    command:
+      - -c
+      - |
+        dnf install -y unzip 2>&1 | tail -1
+        bash /mediainfo-downloader.sh --version 25.10 --architecture x86_64 --dir /tmp/out
+        echo "--- binary ---"
+        ls -lh /tmp/out/
+        /tmp/out/mediainfo --version
+
+  # AL2 arm64 - latest - CLI + lib
+  al2-arm64-latest-cli-lib:
+    <<: *al2
+    platform: linux/arm64
+    command:
+      - -c
+      - |
+        yum install -y unzip 2>&1 | tail -1
+        bash /mediainfo-downloader.sh --architecture arm64 --dir /tmp/bin --lib-dir /tmp/lib
+        echo "--- binary ---"
+        ls -lh /tmp/bin/
+        echo "--- lib ---"
+        ls -lh /tmp/lib/
+        /tmp/bin/mediainfo --version
+
+  # AL2 arm64 - specific version - CLI + lib
+  al2-arm64-v25-10-cli-lib:
+    <<: *al2
+    platform: linux/arm64
+    command:
+      - -c
+      - |
+        yum install -y unzip 2>&1 | tail -1
+        bash /mediainfo-downloader.sh --version 25.10 --architecture arm64 --dir /tmp/bin --lib-dir /tmp/lib
+        echo "--- binary ---"
+        ls -lh /tmp/bin/
+        echo "--- lib ---"
+        ls -lh /tmp/lib/
+        /tmp/bin/mediainfo --version
+
+  # error: invalid architecture
+  err-invalid-arch:
+    <<: *al2023
+    platform: linux/arm64
+    command:
+      - -c
+      - |
+        bash /mediainfo-downloader.sh --architecture mips 2>&1 || true
+
+  # error: invalid version string
+  err-invalid-version:
+    <<: *al2023
+    platform: linux/arm64
+    command:
+      - -c
+      - |
+        bash /mediainfo-downloader.sh --version abc 2>&1 || true
+
+  # help flag
+  help:
+    <<: *al2023
+    platform: linux/arm64
+    command:
+      - -c
+      - |
+        bash /mediainfo-downloader.sh --help
